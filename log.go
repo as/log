@@ -1,10 +1,7 @@
 // Package log implements a structured JSON log which can't be
-// dependency injected into your microservice.
+// easily dependency injected into your microservice (on purpose).
 //
-// To use the log, override the package-scoped variables.
-// No need to use dependency injection. Dependency injecting
-// a log only to configure it per-process in a microservice is
-// often a beauracratic, unnecessary practice.
+// To use, override the package-scoped variables at runtime.
 //
 // This code may be copied and pasted into your microservice
 // and modified to your liking. Put it in a package called
@@ -15,6 +12,7 @@ package log
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"time"
 )
@@ -23,74 +21,113 @@ var (
 	// Service name
 	Service = ""
 
-	// Level is the default log level
-	Level = "info"
-
 	// Time is your time function
 	Time = func() interface{} {
 		return time.Now().UnixNano() / int64(time.Millisecond)
 	}
+
+	// Default is the level used when calling Printf and Fatalf
+	Default = Info
 )
 
-// Warn warns
-func Warn(f string, v ...interface{}) { line{level: "warn"}.Printf(f, v...) }
+var (
+	// Info, Warn, and so forth are commonly encountered log "levels".
+	Info  = line{Level: "info"}
+	Warn  = line{Level: "warn"}
+	Error = line{Level: "error"}
+	Fatal = line{Level: "fatal"}
+)
 
-// Info informs
-func Info(f string, v ...interface{}) { line{level: "info"}.Printf(f, v...) }
+var stderr = io.Writer(os.Stderr)
 
-// Fatal also informs, then panics
-func Fatal(f string, v ...interface{}) {
-	line{level: "fatal"}.Printf(f, v...)
-	panic("fatal error") // no os.Exit allowed; doesn't run defer funcs
-}
+// Printf and Fatalf exist to make this package somewhat compatible with
+// the go standard log.
+func Printf(f string, v ...interface{}) { Default.F(f, v...) }
+func Fatalf(f string, v ...interface{}) { Fatal.F(f, v...) }
 
-// Line returns a log line from a list of fields. Fields should be
-// provided in a pair of two, otherwise the remainder is ignored.
-//
-// Empty field values are also ignored.
-//
-// Example:
-//
-// Line(
-// 	"id", 1,
-// 	"name", "x",
-// )
-//
-func Line(fields ...interface{}) (msg string) {
-	// If you're worried about type saftey, please remember
-	// it is a logger.
-	sep := ""
-	for i := 0; i+1 < len(fields); i += 2 {
-		key, val := fields[i], fields[i+1]
-		if val == "" || val == nil {
-			continue
-		}
-		msg += fmt.Sprintf(`%s%q:%s`, sep, key, quote(val))
-		sep = ", "
-	}
-	return "{" + msg + "}"
+// SetOutput sets the log output to w. It returns the previous writer used.
+func SetOutput(w io.Writer) (old io.Writer) {
+	old = stderr
+	stderr = w
+	return old
 }
 
 type line struct {
-	f     string
-	err   error
-	level string
+	fields
+	// Level is exported to be editable directly for package scoped log level declarations
+	Level string
+	msg   string
 }
 
+// Printf attaches the formatted message to line and outputs
+// the result to Stderr. Callers should call F() when not adding
+// extra fields explicitly.
+//
+// The following fields are pre-declared, and emitted in order:
+// (1) svc: value of Service
+// (2) time: result of calling Time()
+// (3) level: the log level
+// (4) msg: the formatted string provided to Printf
+//
+// Prefer log.Error.F() to log.Error.Printf() unless using Add
 func (l line) Printf(f string, v ...interface{}) {
-	fmt.Fprintln(os.Stderr, l.Sprintf(f, v...))
-}
-func (l line) Sprintf(f string, v ...interface{}) string {
-	if l.level == "" {
-		l.level = Level
+	fmt.Fprintln(stderr, l.Msg(f, v...).String())
+	if l.Level == "fatal" {
+		panic("fatal log level")
 	}
-	return Line(
+}
+
+// F is equivalent to Printf
+func (l line) F(f string, v ...interface{}) {
+	l.Printf(f, v...)
+}
+
+// Msg returns a copy of l with the msg field set
+// to the formatted string argument provided. Most
+// callers should use the l.Printf or l.F
+func (l line) Msg(f string, v ...interface{}) line {
+	l.msg = fmt.Sprintf(f, v...)
+	return l
+}
+
+// String returns the line as a string
+func (l line) String() string {
+	return fields{
 		"svc", Service,
 		"time", Time(),
-		"level", l.level,
-		"err", l.err,
-		"msg", fmt.Sprintf(f, v...),
-	)
+		"level", l.Level,
+		"msg", l.msg,
+	}.add(l.fields...).String()
+}
+
+// Add returns a copy of the line with the custom fields provided
+// fields should be provided in pairs, otherwise they are ignored:
+//
+// Info.Add("railway", "east", "stop", 5).Printf("train stopped")
+//
+// Add always makes a deep copy.
+func (l line) Add(field ...interface{}) line {
+	l.fields = l.fields.add(field...)
+	return l
+}
+
+type fields []interface{}
+
+func (f fields) String() (s string) {
+	sep := ""
+	for i := 0; i+1 < len(f); i += 2 {
+		key, val := f[i], f[i+1]
+		if val == "" || val == nil {
+			continue
+		}
+		s += fmt.Sprintf(`%s%q:%s`, sep, key, quote(val))
+		sep = ", "
+	}
+	return "{" + s + "}"
+}
+
+func (l fields) add(f ...interface{}) fields {
+	return append(append(fields{}, l...), f...)
 }
 
 func quote(v interface{}) string {

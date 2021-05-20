@@ -1,54 +1,60 @@
-# log
+# Synopsis
 
-```
-package main
+Package log implements a structured JSON log which can't be
+easily dependency injected into your microservice (on purpose).
 
-import "github.com/as/log"
+# Variables
 
-func main(){
-	log.Info("Hello, Playground")
-	log.Warn("Hello, Playground")
-	log.Fatal("Hello, Playground")
-}
-
-{"svc":"test", "time":1621481516021, "level":"info", "msg":"Hello, Playground"}
-{"svc":"test", "time":1621481516021, "level":"warn", "msg":"Hello, Playground"}
-{"svc":"test", "time":1621481516021, "level":"fatal", "msg":"Hello, Playground"}
-panic: fatal error
-
-goroutine 1 [running]:
-
-```
-
-# description
-
-```
-// Package log implements a structured JSON log which can't be
-// dependency injected into your microservice.
-//
-// To use the log, override the package-scoped variables.
-// No need to use dependency injection. Dependency injecting
-// a log only to configure it per-process in a microservice is
-// often a beauracratic, unnecessary practice.
-//
-// This code may be copied and pasted into your microservice
-// and modified to your liking. Put it in a package called
-// log. A little copying is better than a little dependency.
-```
-
-# variables
+To use, first override the package-scoped variables at runtime.
 
 ```
 var (
 	// Service name
 	Service = ""
 
-	// Level is the default log level
-	Level   = "info"
-
 	// Time is your time function
 	Time    = func() interface{} {
 		return time.Now().UnixNano() / int64(time.Millisecond)
 	}
+
+	// Default is the level used when calling Printf and Fatalf
+	Default = Info
 )
 ```
+
+# Examples
+
+main.go
+```
+package main
+
+import "github.com/as/log"
+
+func main() {
+	log.Service = "ex"
+	log.Time = func() interface{} { return "2121.12.04" }
+
+	log.Error.Add(
+		"env", "prod",
+		"burning", true,
+		"pi", 3.14,
+	).Printf("error: %v", io.EOF)
+}
+```
+
+output
+```
+{"svc":"ex", "time":"2121.12.04", "level":"error", "msg":"error: EOF", "env":"prod", "burning":true, "pi":3.14}
+```
+
+# Install
+
+```
+go get github.com/as/log
+go test github.com/as/log -v -bench . 
+go test github.com/as/log -race -count 100
+```
+
+This code may also be copied and pasted into your microservice
+and modified to your liking. Put it in a package called
+log. A little copying is better than a little dependency.
