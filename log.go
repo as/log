@@ -24,11 +24,11 @@ var (
 	Service = ""
 
 	// Level is the default log level
-	Level   = "info"
+	Level = "info"
 
 	// Time is your time function
-	Time    = func() string {
-		return fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
+	Time = func() interface{} {
+		return time.Now().UnixNano() / int64(time.Millisecond)
 	}
 )
 
