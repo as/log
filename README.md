@@ -6,6 +6,7 @@ package main
 import "github.com/as/log"
 
 func main(){
+	log.Service = "test"
 	log.Info("Hello, Playground")
 	log.Warn("Hello, Playground")
 	log.Fatal("Hello, Playground")
