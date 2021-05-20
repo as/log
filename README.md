@@ -52,7 +52,7 @@ output
 ```
 go get github.com/as/log
 go test github.com/as/log -v -bench . 
-go test github.com/as/log -race -count 100
+go test github.com/as/log -race -count 1
 ```
 
 This code may also be copied and pasted into your microservice
