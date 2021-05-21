@@ -54,7 +54,6 @@ func SetOutput(w io.Writer) (old io.Writer) {
 
 type line struct {
 	fields
-	// Level is exported to be editable directly for package scoped log level declarations
 	Level string
 	msg   string
 }
@@ -110,6 +109,17 @@ func (l line) Add(field ...interface{}) line {
 	l.fields = l.fields.add(field...)
 	return l
 }
+
+// New returns a log line with an extra field list
+func New(fields ...interface{}) line {
+	return Default.Add(fields...)
+}
+
+// Info and the rest of these convert l into another log level
+func (l line) Info() line  { l.Level = Info.Level; return l }
+func (l line) Error() line { l.Level = Error.Level; return l }
+func (l line) Warn() line  { l.Level = Warn.Level; return l }
+func (l line) Fatal() line { l.Level = Fatal.Level; return l }
 
 type fields []interface{}
 
