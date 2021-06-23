@@ -21,7 +21,7 @@ var (
 	// Service name
 	Service = ""
 
-	// Time is your time function
+	// Time is your time function. Default is a millisecond timestamp.
 	Time = func() interface{} {
 		return time.Now().UnixNano() / int64(time.Millisecond)
 	}
@@ -36,6 +36,10 @@ var (
 	Warn  = line{Level: "warn"}
 	Error = line{Level: "error"}
 	Fatal = line{Level: "fatal"}
+
+	// Debug is a special level, it is only printed if DebugOn is true
+	Debug   = line{Level: "debug"}
+	DebugOn = false
 )
 
 var stderr = io.Writer(os.Stderr)
@@ -70,6 +74,9 @@ type line struct {
 //
 // Prefer log.Error.F() to log.Error.Printf() unless using Add
 func (l line) Printf(f string, v ...interface{}) {
+	if l.Level == Debug.Level && !DebugOn {
+		return
+	}
 	fmt.Fprintln(stderr, l.Msg(f, v...).String())
 	if l.Level == "fatal" {
 		panic("fatal log level")
