@@ -33,7 +33,7 @@ func TestAdd(t *testing.T) {
 		"query", "what",
 		"err", io.EOF,
 	).Msg("custom fields").String()
-	want := `{"svc":"test", "time":12345, "level":"error", "msg":"custom fields", "ip":"1.2.3.4", "port":"1111", "client":"mothra", "host":"example.com", "path":"/file.txt", "query":"what", "err":"EOF"}`
+	want := `{"svc":"test", "time":12345, "level":"error", "ip":"1.2.3.4", "port":"1111", "client":"mothra", "host":"example.com", "path":"/file.txt", "query":"what", "err":"EOF", "msg":"custom fields"}`
 	if have != want {
 		t.Fatalf("bad log:\n\t\thave: %s\n\t\twant: %s", have, want)
 	}
@@ -128,7 +128,7 @@ func Example_second() {
 	log.Time = func() interface{} { return 1000 }
 
 	log.Error.Add("severity", "high").Printf("hello, error: %v", io.EOF)
-	// Output: {"svc":"ex", "time":1000, "level":"error", "msg":"hello, error: EOF", "severity":"high"}
+	// Output: {"svc":"ex", "time":1000, "level":"error", "severity":"high", "msg":"hello, error: EOF"}
 }
 
 func Example_third() {
@@ -141,5 +141,5 @@ func Example_third() {
 		"burning", true,
 		"pi", 3.14,
 	).Printf("error: %v", io.EOF)
-	// Output: {"svc":"ex", "time":"2121.12.04", "level":"error", "msg":"error: EOF", "env":"prod", "burning":true, "pi":3.14}
+	// Output: {"svc":"ex", "time":"2121.12.04", "level":"error", "env":"prod", "burning":true, "pi":3.14, "msg":"error: EOF"}
 }

@@ -98,12 +98,12 @@ func (l line) Msg(f string, v ...interface{}) line {
 
 // String returns the line as a string
 func (l line) String() string {
-	return fields{
+	hdr := append(fields{
 		"svc", Service,
 		"time", Time(),
 		"level", l.Level,
-		"msg", l.msg,
-	}.add(l.fields...).String()
+	}, l.fields...)
+	return append(hdr, "msg", l.msg).String()
 }
 
 // Add returns a copy of the line with the custom fields provided
