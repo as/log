@@ -26,6 +26,10 @@ var (
 		return time.Now().UnixNano() / int64(time.Millisecond)
 	}
 
+	// Tags are global static fields to publish for this process on
+	// all log levels and callers
+	Tags = fields{}
+
 	// Default is the level used when calling Printf and Fatalf
 	Default = Info
 )
@@ -102,7 +106,8 @@ func (l line) String() string {
 		"svc", Service,
 		"time", Time(),
 		"level", l.Level,
-	}, l.fields...)
+	}, Tags...)
+	hdr = append(hdr, l.fields...)
 	return append(hdr, "msg", l.msg).String()
 }
 
@@ -113,7 +118,7 @@ func (l line) String() string {
 //
 // Add always makes a deep copy.
 func (l line) Add(field ...interface{}) line {
-	l.fields = l.fields.add(field...)
+	l.fields = l.fields.Add(field...)
 	return l
 }
 
@@ -143,7 +148,7 @@ func (f fields) String() (s string) {
 	return "{" + s + "}"
 }
 
-func (l fields) add(f ...interface{}) fields {
+func (l fields) Add(f ...interface{}) fields {
 	return append(append(fields{}, l...), f...)
 }
 

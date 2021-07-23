@@ -39,6 +39,21 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+
+func TestTag(t *testing.T) {
+ 	before := log.Tags
+	log.Tags = log.Tags.Add("subcmd", "test")
+	defer func(){
+		log.Tags =before
+	}()
+
+	have := log.Error.Add("ip", "1.2.3.4").Msg("custom tags").String()
+	want := `{"svc":"test", "time":12345, "level":"error", "subcmd":"test", "ip":"1.2.3.4", "msg":"custom tags"}`
+	if have != want {
+		t.Fatalf("bad log:\n\t\thave: %s\n\t\twant: %s", have, want)
+	}
+}
+
 func TestRace(t *testing.T) {
 	defer log.SetOutput(log.SetOutput(ioutil.Discard))
 
