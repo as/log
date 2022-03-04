@@ -17,7 +17,7 @@ func init() {
 
 func TestLog(t *testing.T) {
 	have := log.Info.Msg("test log message: %s", "package scoped variables arent hard to test").String()
-	want := `{"svc":"test", "time":12345, "level":"info", "msg":"test log message: package scoped variables arent hard to test"}`
+	want := `{"svc":"test", "ts":12345, "level":"info", "msg":"test log message: package scoped variables arent hard to test"}`
 	if have != want {
 		t.Fatalf("bad log:\n\t\thave: %s\n\t\twant: %s", have, want)
 	}
@@ -33,22 +33,21 @@ func TestAdd(t *testing.T) {
 		"query", "what",
 		"err", io.EOF,
 	).Msg("custom fields").String()
-	want := `{"svc":"test", "time":12345, "level":"error", "ip":"1.2.3.4", "port":"1111", "client":"mothra", "host":"example.com", "path":"/file.txt", "query":"what", "err":"EOF", "msg":"custom fields"}`
+	want := `{"svc":"test", "ts":12345, "level":"error", "ip":"1.2.3.4", "port":"1111", "client":"mothra", "host":"example.com", "path":"/file.txt", "query":"what", "err":"EOF", "msg":"custom fields"}`
 	if have != want {
 		t.Fatalf("bad log:\n\t\thave: %s\n\t\twant: %s", have, want)
 	}
 }
 
-
 func TestTag(t *testing.T) {
- 	before := log.Tags
+	before := log.Tags
 	log.Tags = log.Tags.Add("subcmd", "test")
-	defer func(){
-		log.Tags =before
+	defer func() {
+		log.Tags = before
 	}()
 
 	have := log.Error.Add("ip", "1.2.3.4").Msg("custom tags").String()
-	want := `{"svc":"test", "time":12345, "level":"error", "subcmd":"test", "ip":"1.2.3.4", "msg":"custom tags"}`
+	want := `{"svc":"test", "ts":12345, "level":"error", "subcmd":"test", "ip":"1.2.3.4", "msg":"custom tags"}`
 	if have != want {
 		t.Fatalf("bad log:\n\t\thave: %s\n\t\twant: %s", have, want)
 	}
@@ -125,7 +124,7 @@ func ExamplePrintf() {
 	log.Service = "ex"
 	log.Time = func() interface{} { return 1000 }
 	log.Printf("hello, world")
-	// Output: {"svc":"ex", "time":1000, "level":"info", "msg":"hello, world"}
+	// Output: {"svc":"ex", "ts":1000, "level":"info", "msg":"hello, world"}
 }
 
 func Example() {
@@ -134,7 +133,7 @@ func Example() {
 	log.Time = func() interface{} { return 1000 }
 
 	log.Error.F("hello, error: %v", io.EOF)
-	// Output: {"svc":"ex", "time":1000, "level":"error", "msg":"hello, error: EOF"}
+	// Output: {"svc":"ex", "ts":1000, "level":"error", "msg":"hello, error: EOF"}
 }
 
 func Example_second() {
@@ -143,7 +142,7 @@ func Example_second() {
 	log.Time = func() interface{} { return 1000 }
 
 	log.Error.Add("severity", "high").Printf("hello, error: %v", io.EOF)
-	// Output: {"svc":"ex", "time":1000, "level":"error", "severity":"high", "msg":"hello, error: EOF"}
+	// Output: {"svc":"ex", "ts":1000, "level":"error", "severity":"high", "msg":"hello, error: EOF"}
 }
 
 func Example_third() {
@@ -156,5 +155,5 @@ func Example_third() {
 		"burning", true,
 		"pi", 3.14,
 	).Printf("error: %v", io.EOF)
-	// Output: {"svc":"ex", "time":"2121.12.04", "level":"error", "env":"prod", "burning":true, "pi":3.14, "msg":"error: EOF"}
+	// Output: {"svc":"ex", "ts":"2121.12.04", "level":"error", "env":"prod", "burning":true, "pi":3.14, "msg":"error: EOF"}
 }

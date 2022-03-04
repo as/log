@@ -83,7 +83,7 @@ func (l line) Printf(f string, v ...interface{}) {
 	}
 	fmt.Fprintln(stderr, l.Msg(f, v...).String())
 	if l.Level == "fatal" {
-		panic(fmt.Sprintf("fatality: "+f, v...))
+		panic(trapme(fmt.Sprintf("fatal: "+f, v...)))
 	}
 }
 
@@ -162,4 +162,17 @@ func quote(v interface{}) string {
 	}
 	data, _ := json.Marshal(v)
 	return string(data)
+}
+
+type trapme string
+
+// Trap may be used in a defer to suppress stack traces caused
+// by a call to Fatal.F or Fatal.Printf. Panics from other sources are
+// not affected. Trap calls os.Exit(1) if the panic occured from these
+// functions.
+func Trap() {
+	v := recover()
+	if _, ok := v.(trapme); ok {
+		os.Exit(1)
+	}
 }
