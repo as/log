@@ -175,4 +175,7 @@ func Trap() {
 	if _, ok := v.(trapme); ok {
 		os.Exit(1)
 	}
+	if v != nil {
+		panic(v) // re-panic if something else caused it
+	}
 }
