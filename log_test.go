@@ -4,6 +4,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -81,6 +82,19 @@ func TestFatal(t *testing.T) {
 	}()
 	defer log.SetOutput(log.SetOutput(ioutil.Discard))
 	log.Fatal.F("panic: %v", io.EOF)
+}
+
+func TestExport(t *testing.T) {
+	before := log.Tags
+	log.Tags = log.Tags.Add("env", "dev", "version", 1, "git", "af753", "empty", "", "", 6)
+	defer func() {
+		log.Tags = before
+	}()
+	want := "env,dev,version,1,git,af753"
+	have := strings.Join(log.Tags.Export(), ",")
+	if have != want {
+		t.Fatalf("bad log:\n\t\thave: %s\n\t\twant: %s", have, want)
+	}
 }
 
 func BenchmarkLog(b *testing.B) {
