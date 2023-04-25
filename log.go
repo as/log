@@ -1,5 +1,4 @@
-// Package log implements a structured JSON log which can't be
-// easily dependency injected into your microservice (on purpose).
+// Package log implements a simple structured JSON logger
 //
 // To use, override the package-scoped variables at runtime.
 //
@@ -17,11 +16,14 @@ import (
 	"time"
 )
 
+// Line allows a log line to be embedded somewhere
+type Line = line
+
 var (
 	// Service name (can be set in main or elsewhere)
 	Service = os.Getenv("SVC")
 
-	// Time is your time function. Default is a millisecond timestamp.
+	// Time is your time function. Default is a second timestamp.
 	Time = func() interface{} {
 		return time.Now().Unix()
 	}
@@ -190,6 +192,11 @@ type trapme string
 // by a call to Fatal.F or Fatal.Printf. Panics from other sources are
 // not affected. Trap calls os.Exit(1) if the panic occured from these
 // functions.
+//
+// func main(){
+// 		defer log.Trap()
+//
+// }
 func Trap() {
 	v := recover()
 	if _, ok := v.(trapme); ok {
