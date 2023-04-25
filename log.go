@@ -124,6 +124,14 @@ func (l line) Add(field ...interface{}) line {
 	return l
 }
 
+// Export returns the key values as a string slice
+// including any set package-scoped tags
+func (l line) Export() (kv []string) {
+	f := append(fields{}, Tags...)
+	f = append(f, l.fields...)
+	return f.Export()
+}
+
 // New returns a log line with an extra field list
 func New(fields ...interface{}) line {
 	return Default.Add(fields...)
