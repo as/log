@@ -63,6 +63,7 @@ func SetOutput(w io.Writer) (old io.Writer) {
 }
 
 type line struct {
+	fn func(line)
 	fields
 	Level string
 	msg   string
@@ -102,8 +103,16 @@ func (l line) Msg(f string, v ...interface{}) line {
 	return l
 }
 
-// String returns the line as a string
+// String returns the line as a string. If the line was created with
+// AddFunc the attached func is executed exactly once before
+// the string is created
 func (l line) String() string {
+	if l.fn != nil {
+		fn := l.fn
+		l.fn = nil
+		fn(l)
+		l.fn = fn
+	}
 	hdr := append(fields{
 		"svc", Service,
 		"ts", Time(), // time often gets overwritten
@@ -130,6 +139,20 @@ func (l line) Export() (kv []string) {
 	f := append(fields{}, Tags...)
 	f = append(f, l.fields...)
 	return f.Export()
+}
+
+// AddFunc return a new line with fn attached
+// The fn is executed once with every call to l.Printf(),
+// l.F(), or any function that calls l.String().
+//
+// Recursive behavior is not permitted, although it is
+// safe to call ln.String() from fn, it is not safe to do
+// so with l.
+//
+// Warning: Use this function at your own risk
+func (l line) AddFunc(fn func(ln line)) line {
+	l.fn = fn
+	return l
 }
 
 // New returns a log line with an extra field list

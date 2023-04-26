@@ -97,6 +97,34 @@ func TestExport(t *testing.T) {
 	}
 }
 
+func TestAddFunc(t *testing.T) {
+	line := log.Info.Add("test", "TestAddFunc")
+	ctr := 0
+	fn := func(l log.Line) {
+		ctr++
+		t.Log(l.String())
+		l.Printf("nested recursive call")
+		// doing a line.Printf here would crash the program
+	}
+	line.String() // 0
+	line.String() // 0
+
+	line = line.Error().AddFunc(fn).Add("test", "TestAddFunc")
+	line.String()              // 1
+	line = line.Msg("still 1") // no op
+	line.Printf("2")
+	line.F("3")
+
+	line2 := line.AddFunc(nil)
+	line2.String()
+	line2.String()
+
+	line.F("4")
+	if ctr != 4 {
+		t.Fatalf("bad count, want 4 have %d", ctr)
+	}
+}
+
 func BenchmarkLog(b *testing.B) {
 	defer log.SetOutput(log.SetOutput(ioutil.Discard))
 
