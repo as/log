@@ -100,11 +100,12 @@ func TestExport(t *testing.T) {
 func TestAddFunc(t *testing.T) {
 	line := log.Info.Add("test", "TestAddFunc")
 	ctr := 0
-	fn := func(l log.Line) {
+	fn := func(l log.Line) log.Line {
 		ctr++
 		t.Log(l.String())
 		l.Printf("nested recursive call")
 		// doing a line.Printf here would crash the program
+		return l
 	}
 	line.String() // 0
 	line.String() // 0

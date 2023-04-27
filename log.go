@@ -63,7 +63,7 @@ func SetOutput(w io.Writer) (old io.Writer) {
 }
 
 type line struct {
-	fn func(line)
+	fn func(line) line
 	fields
 	Level string
 	msg   string
@@ -110,7 +110,7 @@ func (l line) String() string {
 	if l.fn != nil {
 		fn := l.fn
 		l.fn = nil
-		fn(l)
+		l = fn(l)
 		l.fn = fn
 	}
 	hdr := append(fields{
@@ -150,7 +150,7 @@ func (l line) Export() (kv []string) {
 // so with l.
 //
 // Warning: Use this function at your own risk
-func (l line) AddFunc(fn func(ln line)) line {
+func (l line) AddFunc(fn func(ln Line) Line) Line {
 	l.fn = fn
 	return l
 }
