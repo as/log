@@ -126,6 +126,26 @@ func TestAddFunc(t *testing.T) {
 	}
 }
 
+func TestAddArray(t *testing.T) {
+	hint := []string{}
+	hint = nil
+	have := log.Error.Add(
+		"ip", "1.2.3.4",
+		"port", "1111",
+		"client", "mothra",
+		"host", "example.com",
+		"path", "/file.txt",
+		"query", "what",
+		"err", io.EOF,
+		"hint", []string{},
+		"null", hint,
+	).Msg("custom fields").String()
+	want := `{"svc":"test", "ts":12345, "level":"error", "ip":"1.2.3.4", "port":"1111", "client":"mothra", "host":"example.com", "path":"/file.txt", "query":"what", "err":"EOF", "msg":"custom fields"}`
+	if have != want {
+		t.Fatalf("bad log:\n\t\thave: %s\n\t\twant: %s", have, want)
+	}
+}
+
 func BenchmarkLog(b *testing.B) {
 	defer log.SetOutput(log.SetOutput(ioutil.Discard))
 

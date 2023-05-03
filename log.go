@@ -192,7 +192,7 @@ func (f fields) String() (s string) {
 	sep := ""
 	for i := 0; i+1 < len(f); i += 2 {
 		key, val := f[i], f[i+1]
-		if val == "" || val == nil {
+		if val == "" || val == nil || zero(val) {
 			continue
 		}
 		s += fmt.Sprintf(`%s%q:%s`, sep, key, quote(val))
@@ -236,4 +236,12 @@ func Trap() {
 	if v != nil {
 		panic(v) // dont trap other panics
 	}
+}
+
+func zero(v interface{}) bool {
+	t, ok := v.([]string)
+	if !ok {
+		return false
+	}
+	return len(t) == 0
 }
