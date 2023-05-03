@@ -110,3 +110,47 @@ go run main.go
 {"svc":"plumber", "ts":1682559034, "level":"warn", "env":"dev", "host":"scruffy", "op":"unclog", "account":"514423351351", "toilets":["foo","bar"], "action":"bill", "mood":"exhausted", "msg":"it gets clogged to easily"}
 {"svc":"plumber", "ts":1682559034, "level":"info", "env":"dev", "host":"scruffy", "op":"unclog", "account":"514423351351", "toilets":["foo","bar"], "msg":"exit"}
 ```
+
+# Example 3: But my caller frames!
+
+You can use `AddFunc`, which has behavior similar to `Add`. It returns a copy of the line with the attached function executing before every print operation. Some precautions have been taken to avoid infinite recursion, but use of this feature is still mildly discouraged.
+
+```
+package main
+
+import (
+        "fmt"
+        "path"
+        "runtime"
+
+        "github.com/as/log"
+)
+
+func main() {
+        log.Service = "plumber"
+        unclog()
+}
+
+func unclog() {
+        fn := func(l log.Line) log.Line {
+                return l.Add("func", where())
+        }
+        line := log.Info.AddFunc(fn)
+        line.Printf("enter")
+        defer line.Printf("exit")
+}
+
+func where() string {
+        pc, file, line, ok := runtime.Caller(1)
+        if !ok {
+                return "/dev/null"
+        }
+        file = path.Base(file)
+
+        fn := runtime.FuncForPC(pc)
+        if fn == nil {
+                return fmt.Sprintf("%s:%d", file, line)
+        }
+        return fmt.Sprintf("%s:/%s/", file, fn.Name())
+}
+```
